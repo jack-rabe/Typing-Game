@@ -1,0 +1,16 @@
+.label{
+	-fx-text-fill: white;
+	-fx-font-size: 42px;
+
+}
+
+
+.button{
+	-fx-color: white;
+	-fx-font-size:32px;
+	-fx-padding: 4px 28px;
+}
+
+.button:hover{
+	-fx-color: black
+}

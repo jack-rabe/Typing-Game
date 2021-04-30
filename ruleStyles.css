@@ -1,0 +1,10 @@
+.button{
+	-fx-color: white;
+	-fx-font-size:32px;
+	-fx-width: 5px;
+	-fx-padding: 4px 28px;
+}
+
+.button:hover{
+	-fx-color: black
+}
