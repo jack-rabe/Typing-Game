@@ -1,13 +1,12 @@
 .label{
 	-fx-text-fill: white;
 	-fx-font-size: 42px;
-
 }
-
 
 .button{
 	-fx-color: white;
 	-fx-font-size:32px;
+	-fx-width: 5px;
 	-fx-padding: 4px 28px;
 }
 
