@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -7,7 +6,6 @@ import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -17,21 +15,27 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
 
 public class Main extends Application {
   private Stage stage;
-  public final static int WIDTH = 700;
+  public final static int WIDTH = 800;
   public final static int HEIGHT = 500;
+  private final static int FPS = 10;
   private Scene menuScreen, rulesScreen, gameScreen;
   
-  private String [] acceptableChars = new String [] {"a", "b"};  // TODO remove this stub when possible
   private List<String> allWords = new ArrayList<String>();
   private List<Word> wordsOnScreen = new ArrayList<Word>();
+  private int score = 0;
+  private Word selectedWord = null;
   
   ImageView JUNGLE = new ImageView("jungle.jpg");
+  Font GAMEFONT = new Font("arial", 24);
   
   private Scene createMenuScreen() {
     BorderPane mainPane = new BorderPane();
@@ -98,8 +102,8 @@ public class Main extends Application {
   }
   
   private Scene createGameScreen() {
-    Group group = new Group();
-    Scene scene = new Scene(group);
+    StackPane stackPane = new StackPane();
+    Scene scene = new Scene(stackPane, WIDTH, HEIGHT);
     scene.getStylesheets().add("gameStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "gameStyles.css");
     
     // create canvas and graphics context
@@ -111,28 +115,57 @@ public class Main extends Application {
     JUNGLE.setPreserveRatio(true);
     
     // add background image and canvas to the screen
-    group.getChildren().add(JUNGLE);
-    group.getChildren().add(canvas);
+    stackPane.getChildren().add(JUNGLE);
+    stackPane.getChildren().add(canvas);
     
     // handle key presses (when user is typing words onscreen)
     scene.setOnKeyPressed(event -> {
-      String enteredChar = event.getText();
-      if (Arrays.binarySearch(acceptableChars, enteredChar) >= 0)
-        gc.fillText((String) enteredChar, 50, 50);
+      if (event.getText() == null) { return; }  // ensure some text has been entered
+      char enteredChar = event.getText().charAt(0);
+      List<Character> acceptableLetters = Utils.getAcceptableLetters(wordsOnScreen, selectedWord);
+
+      if (!acceptableLetters.contains(enteredChar)) { return; }  // exit method if the character is invalid
+      
+      if (selectedWord != null) { // a word has already been selected
+        if (enteredChar == selectedWord.getCurrentChar()) {
+          selectedWord.charTyped();
+        }
+      }
+      else {
+        for (Word word : wordsOnScreen) {  // no words are selected yet
+          if (enteredChar == word.getCurrentChar()) {
+            word.charTyped();
+            selectedWord = word;
+            break;
+          }
+        }
+      }
+
+      // remove a word that has been completely typed
+      int wordLength = selectedWord.getContents().length();
+      if (selectedWord != null && (selectedWord.getCurrentIndex() >= wordLength)) {
+        wordsOnScreen.remove(selectedWord);
+        selectedWord = null;
+        score ++;
+      }
     });
 
-    
     // start the main game loop
-    Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+    Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1.0 / FPS), event -> {
       gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());  // clear canvas
       Utils.addWordToScreen(allWords, wordsOnScreen);
       
-      for (Word word : wordsOnScreen) {  // display all current words and update their position
-        gc.fillText(word.getContents(), word.getX(), word.getY());
+      // display all current words and update their position
+      gc.setFont(GAMEFONT);
+      for (Word word : wordsOnScreen) {
+        displayWord(gc, word);
         word.move();
       }
       
-      
+      // display the score
+      String scoreAsStr = "Score: " + score;
+      gc.setFont(new Font("arial", 24));
+      gc.fillText(scoreAsStr, WIDTH - 100, 25);
     }));
     
     timeline.setCycleCount(Animation.INDEFINITE);
@@ -141,6 +174,27 @@ public class Main extends Application {
 
 
     return scene;
+  }
+  
+  private void displayWord(GraphicsContext gc, Word word) {
+    if (word.equals(selectedWord)) {
+      // calculate the offset between the typed and untyped parts of the word
+      String typed = word.getContents().substring(0, word.getCurrentIndex());
+      String untyped = word.getContents().substring(word.getCurrentIndex());
+      Text typedText = new Text(typed);
+      typedText.setFont(GAMEFONT);
+      double typedLength = typedText.getLayoutBounds().getWidth();
+      
+      gc.setFill(Color.BLUE);
+      gc.fillText(typed, word.getX(), word.getY());
+      gc.setFill(Color.BLACK);
+      gc.fillText(untyped, word.getX() + typedLength, word.getY());
+    }
+    
+    else {  // no word has been selected yet
+      gc.setFill(Color.BLACK);
+      gc.fillText(word.getContents(), word.getX(), word.getY());
+    }
   }
 
   @Override

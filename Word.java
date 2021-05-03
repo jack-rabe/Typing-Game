@@ -1,7 +1,6 @@
 import java.util.Random;
 public class Word {
   private String contents;
-  private boolean isSelected;
   private int charIndex;
   private int xLocation;
   private int yLocation;
@@ -9,18 +8,23 @@ public class Word {
   public Word(String str) {
     this.contents = str;
     this.charIndex = 0;
-    this.isSelected = false;
-    this.yLocation =  new Random().nextInt(Main.HEIGHT);
+    this.yLocation =  new Random().nextInt(Main.HEIGHT - 40) + 40;
     this.xLocation = Main.WIDTH - 25;
   }
   
-  public boolean getIsSelected() { return isSelected; }
   public String getContents() { return contents; }
   public char getCurrentChar() { return contents.charAt(charIndex); }
+  public int getCurrentIndex() { return charIndex; }
   public int getX() { return xLocation; };
   public int getY() { return yLocation; };
   
   public void charTyped() { charIndex++; };
-  public void select() { isSelected = true; }
-  public void move () { xLocation -= (Main.WIDTH / 15); }
+  public void move () { xLocation -= (Main.WIDTH / 150); }
 }
+
+// goals:
+/*
+ add scoring
+ track which letters/words are being typed
+ 
+*/

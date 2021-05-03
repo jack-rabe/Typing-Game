@@ -41,17 +41,8 @@ public class Utils {
    * every word onscreen or list containining a single letter if a word has
    * already been selected
    */
-  public static List<Character> getAcceptableLetters(List<Word> wordsOnScreen){
+  public static List<Character> getAcceptableLetters(List<Word> wordsOnScreen, Word selectedWord){
     List<Character> acceptableLetters = new ArrayList<Character>();
-
-    // check to see if a word has already been selected
-    Word selectedWord = null;
-    for (Word word : wordsOnScreen) { 
-      if (word.getIsSelected()) {
-        selectedWord = word;
-        break;
-      }
-    }
 
     if (selectedWord == null)  // no word has been selected yet
       for (Word word : wordsOnScreen) { acceptableLetters.add(word.getCurrentChar()); }
@@ -71,3 +62,4 @@ public class Utils {
     wordsOnScreen.add(newWord);
   }
 }
+  
