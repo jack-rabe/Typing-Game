@@ -3,10 +3,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Random;
 
 public class Utils {
-  // Adds all words from the text file w/ the specified number of letters
-  // to a List
   /**
    * Reads all words from the .txt file and adds the ones less than or equal
    * to the desired length to a list
@@ -15,16 +14,19 @@ public class Utils {
    */
   public static List<String> setUpWords(int numLetters) {
     try {
+
       Scanner scanner = new Scanner(new File("engmix.txt"));
       List<String> list = new ArrayList<String>();
 
+      // read the file
       while (scanner.hasNext()) {
-        list.add(scanner.nextLine());
+        String str = scanner.nextLine();
+        if (str.length() <= numLetters) list.add(str);
       }
-
       scanner.close();
       return list;
     }
+
     catch(FileNotFoundException fnfe) {
       //TODO handle exception here???
       return null;
@@ -41,7 +43,7 @@ public class Utils {
    */
   public static List<Character> getAcceptableLetters(List<Word> wordsOnScreen){
     List<Character> acceptableLetters = new ArrayList<Character>();
-    
+
     // check to see if a word has already been selected
     Word selectedWord = null;
     for (Word word : wordsOnScreen) { 
@@ -50,14 +52,22 @@ public class Utils {
         break;
       }
     }
-    
-    if (selectedWord == null)  // no words has been selected yet
-      for (Word word : wordsOnScreen) { acceptableLetters.add(word.getContents().charAt(0)); }
-    else {  // a word has already been selected
-      char currentLetter = selectedWord.getCurrentChar();
-      acceptableLetters.add(currentLetter);
-    }
-    
+
+    if (selectedWord == null)  // no word has been selected yet
+      for (Word word : wordsOnScreen) { acceptableLetters.add(word.getCurrentChar()); }
+    else { acceptableLetters.add(selectedWord.getCurrentChar()); } // a word has already been selected 
+
     return acceptableLetters;
+  }
+
+  /**
+   * Adds another word to the screen from the list of all words
+   * @param allWordsList A list of all words from the .txt file w/ the correct length
+   * @param wordsOnScreen A list of the words already on the screen
+   */
+  public static void addWordToScreen(List<String> allWordsList, List<Word> wordsOnScreen) {
+    int newIndex = new Random().nextInt(allWordsList.size());
+    Word newWord = new Word(allWordsList.remove(newIndex));
+    wordsOnScreen.add(newWord);
   }
 }

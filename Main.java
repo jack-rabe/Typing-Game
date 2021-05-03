@@ -1,11 +1,9 @@
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -14,8 +12,10 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -23,19 +23,21 @@ import javafx.scene.text.Font;
 
 public class Main extends Application {
   private Stage stage;
-  private final int WIDTH = 600, HEIGHT = 600;
+  public final static int WIDTH = 700;
+  public final static int HEIGHT = 500;
   private Scene menuScreen, rulesScreen, gameScreen;
   
   private String [] acceptableChars = new String [] {"a", "b"};  // TODO remove this stub when possible
   private List<String> allWords = new ArrayList<String>();
   private List<Word> wordsOnScreen = new ArrayList<Word>();
   
+  ImageView JUNGLE = new ImageView("jungle.jpg");
   
   private Scene createMenuScreen() {
     BorderPane mainPane = new BorderPane();
     mainPane.setStyle("-fx-background-color: blue;");
     Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
-    scene.getStylesheets().add("Styles" + System.lineSeparator() + "menuStyles.css");
+    scene.getStylesheets().add("menuStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "menuStyles.css");
     
     // Display the title of the game top and center
     Label title = new Label("Home");
@@ -68,7 +70,7 @@ public class Main extends Application {
     BorderPane mainPane = new BorderPane();
     mainPane.setStyle("-fx-background-color: red;");
     Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
-    scene.getStylesheets().add("Styles" + System.lineSeparator() + "ruleStyles.css");
+    scene.getStylesheets().add("ruleStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "ruleStyles.css");
     
     // Display the title of the game top and center
     Label title = new Label("Rules");
@@ -98,22 +100,46 @@ public class Main extends Application {
   private Scene createGameScreen() {
     Group group = new Group();
     Scene scene = new Scene(group);
-    scene.getStylesheets().add("Styles" + System.lineSeparator() + "gameStyles.css");
+    scene.getStylesheets().add("gameStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "gameStyles.css");
     
     // create canvas and graphics context
     Canvas canvas = new Canvas(WIDTH, HEIGHT);
-    group.getChildren().add(canvas);
     GraphicsContext gc = canvas.getGraphicsContext2D();
     
+    // fit the background image to the screen size
+    JUNGLE.fitWidthProperty().bind(scene.widthProperty()); 
+    JUNGLE.setPreserveRatio(true);
+    
+    // add background image and canvas to the screen
+    group.getChildren().add(JUNGLE);
+    group.getChildren().add(canvas);
+    
+    // handle key presses (when user is typing words onscreen)
     scene.setOnKeyPressed(event -> {
       String enteredChar = event.getText();
       if (Arrays.binarySearch(acceptableChars, enteredChar) >= 0)
-          gc.fillText((String) enteredChar, 50, 50);
+        gc.fillText((String) enteredChar, 50, 50);
     });
+
     
-         
+    // start the main game loop
+    Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+      gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());  // clear canvas
+      Utils.addWordToScreen(allWords, wordsOnScreen);
+      
+      for (Word word : wordsOnScreen) {  // display all current words and update their position
+        gc.fillText(word.getContents(), word.getX(), word.getY());
+        word.move();
+      }
+      
+      
+    }));
     
-    
+    timeline.setCycleCount(Animation.INDEFINITE);
+    timeline.play();//TODO make this loop not start until the play button is clicked for the first time
+
+
+
     return scene;
   }
 
@@ -121,13 +147,13 @@ public class Main extends Application {
   public void start(final Stage stage) {
     this.stage = stage;
     
-    menuScreen = createMenuScreen();
-    rulesScreen = createRulesScreen();
-    gameScreen = createGameScreen();
     
     allWords = Utils.setUpWords(5);
     
     
+    menuScreen = createMenuScreen();
+    rulesScreen = createRulesScreen();
+    gameScreen = createGameScreen();
 
     stage.setTitle("Typing Game");
     stage.setScene(menuScreen);
