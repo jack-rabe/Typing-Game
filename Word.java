@@ -4,12 +4,20 @@ public class Word {
   private int charIndex;
   private int xLocation;
   private int yLocation;
+  private static int lastYLocation = 0;
   
   public Word(String str) {
     this.contents = str;
     this.charIndex = 0;
-    this.yLocation =  new Random().nextInt(Main.HEIGHT - 40) + 40;
     this.xLocation = Main.WIDTH - 25;
+    // pick a y location that is far away from the last word created
+    int difference;
+    do {
+      this.yLocation =  new Random().nextInt(Main.HEIGHT - 40) + 40;
+      difference = Math.abs(this.yLocation - lastYLocation);
+    }
+    while (difference < 40);
+    lastYLocation = this.yLocation;
   }
   
   public String getContents() { return contents; }
@@ -21,10 +29,3 @@ public class Word {
   public void charTyped() { charIndex++; };
   public void move () { xLocation -= (Main.WIDTH / 150); }
 }
-
-// goals:
-/*
- add scoring
- track which letters/words are being typed
- 
-*/

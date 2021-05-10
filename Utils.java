@@ -14,23 +14,20 @@ public class Utils {
    */
   public static List<String> setUpWords(int numLetters) {
     try {
-
       Scanner scanner = new Scanner(new File("engmix.txt"));
       List<String> list = new ArrayList<String>();
+      String str;  // stores each word read by the scanner
 
       // read the file
       while (scanner.hasNext()) {
-        String str = scanner.nextLine();
+        str = scanner.nextLine();
         if (str.length() <= numLetters) list.add(str);
       }
+      
       scanner.close();
       return list;
     }
-
-    catch(FileNotFoundException fnfe) {
-      //TODO handle exception here???
-      return null;
-    }
+    catch(FileNotFoundException fnfe) { return null; }//TODO handle exception here???
   }
 
   /**
@@ -62,4 +59,13 @@ public class Utils {
     wordsOnScreen.add(newWord);
   }
 }
+
+//
+////TODO:
+//set up rules page
+// implement health/high score
+// handle running out of words
+// problems with css directory structure
+// add extra images behind words
+// user selection mode for word length
   
