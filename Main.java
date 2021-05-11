@@ -5,6 +5,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -26,10 +27,10 @@ import javafx.scene.text.Text;
 
 public class Main extends Application {
   private Stage stage;
-  public final static int WIDTH = 800;
+  public final static int WIDTH = 700;
   public final static int HEIGHT = 500;
   private final static int FPS = 10;
-  private Scene menuScreen, rulesScreen, gameScreen;
+  private Scene menuScreen, rulesScreen, gameScreen, gameOverScreen;
   
   private List<String> allWords = new ArrayList<String>();
   private List<Word> wordsOnScreen = new ArrayList<Word>();
@@ -39,26 +40,57 @@ public class Main extends Application {
   private Word selectedWord = null;
   
   ImageView JUNGLE = new ImageView("jungle.jpg");
-  //ImageView LION = new ImageView("monkey.png");//TODO switch back to lion, make transparent
+  Timeline timeline;
+  
   Font GAMEFONT = new Font("arial", 24);
   Font SCOREFONT = new Font("arial", 26);
-  Timeline timeline;
+  Font RULESFONT = new Font("arial", 22);
+  Font TITLEFONT = new Font("arial", 42);
+  
+  private Scene createGameOverScreen() {
+    BorderPane mainPane = new BorderPane();
+    mainPane.setStyle("-fx-background-color: black;");
+    Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
+    scene.getStylesheets().add("Styles" + System.lineSeparator() + "gameOverStyles.css");
+    
+    // Display the title of the game top and center
+    Label gameOver = new Label("Game Over!");
+    BorderPane.setAlignment(gameOver, Pos.CENTER);
+    mainPane.setCenter(gameOver);
+
+    // create the return to menu and quit buttons
+    Button menuBtn = new Button("Menu");
+    menuBtn.setOnAction(event -> { stage.setScene(menuScreen); });
+    Button quitBtn = new Button("Quit");
+    quitBtn.setOnAction(event -> { Platform.exit(); });
+    
+ // add all buttons to VBoxes
+    VBox menuBtnBox = new VBox();
+    menuBtnBox.setAlignment(Pos.BOTTOM_LEFT);
+    menuBtnBox.getChildren().add(menuBtn);
+    VBox quitBtnBox = new VBox();
+    quitBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+    quitBtnBox.getChildren().add(quitBtn);
+   
+    mainPane.setLeft(menuBtnBox);
+    mainPane.setRight(quitBtnBox);
+    return scene;
+  }
   
   private Scene createMenuScreen() {
     BorderPane mainPane = new BorderPane();
     mainPane.setStyle("-fx-background-color: blue;");
     Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
-    scene.getStylesheets().add("menuStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "menuStyles.css");
+    scene.getStylesheets().add("Styles" + System.lineSeparator() + "menuStyles.css");
     
     // Display the title of the game top and center
     Label title = new Label("Home");
-    title.setFont(Font.font(28));
     BorderPane.setAlignment(title, Pos.CENTER);
     mainPane.setTop(title);
 
     // create the start, rules, and quit buttons
     Button startBtn = new Button("Start");
-    startBtn.setOnAction(event -> { stage.setScene(gameScreen); timeline.play(); }); //TODO make this loop not start until the play button is clicked for the first time});
+    startBtn.setOnAction(event -> { stage.setScene(gameScreen); timeline.play(); });
     Button rulesBtn = new Button("Rules");
     rulesBtn.setOnAction(event -> { stage.setScene(rulesScreen); });
     Button quitBtn = new Button("Quit");
@@ -81,13 +113,24 @@ public class Main extends Application {
     BorderPane mainPane = new BorderPane();
     mainPane.setStyle("-fx-background-color: red;");
     Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
-    scene.getStylesheets().add("ruleStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "ruleStyles.css");
+    scene.getStylesheets().add("Styles" + System.lineSeparator() + "ruleStyles.css");
     
     // Display the title of the game top and center
     Label title = new Label("Rules");
-    title.setFont(Font.font(28));
+    title.setFont(TITLEFONT);
     BorderPane.setAlignment(title, Pos.CENTER);
     mainPane.setTop(title);
+    
+    // display the explanatory rules text
+    Label rules = new Label("This is a game for beginner typists to improve their"
+        + " skills. Words will appear on the left side of the screen. You will be "
+        + "able to type a single word at a time, and when you are finished, it will"
+        + " disappear. If a word makes it all the way to the left side of the screen,"
+        + " you will lose a life; once you lose five lives, the game is over.");
+    rules.setFont(RULESFONT);
+    rules.setWrapText(true);
+    rules.setPadding(new Insets(14));
+    mainPane.setCenter(rules);
 
     // create the start, rules, and quit buttons
     Button menuBtn = new Button("Menu");
@@ -111,7 +154,6 @@ public class Main extends Application {
   private Scene createGameScreen() {
     StackPane stackPane = new StackPane();
     Scene scene = new Scene(stackPane, WIDTH, HEIGHT);
-    scene.getStylesheets().add("gameStyles.css");//scene.getStylesheets().add("Styles" + System.lineSeparator() + "gameStyles.css");
     
     // create canvas and graphics context
     Canvas canvas = new Canvas(WIDTH, HEIGHT);
@@ -157,8 +199,25 @@ public class Main extends Application {
       }
     });
 
-    // start the main game loop
+    // create the main game loop
+    timeline = createTimeline(gc, canvas);
+
+    return scene;
+  }
+  
+  private Timeline createTimeline(GraphicsContext gc, Canvas canvas) {
+    score = 0;
+    health = 5;
+    
     timeline = new Timeline(new KeyFrame(Duration.seconds(1.0 / FPS), event -> {
+      if (health <= 0) {  // check to see if the player has already lost
+        timeline.stop();
+        timeline = createTimeline(gc, canvas);
+        stage.setScene(gameOverScreen);
+        wordsOnScreen.clear();
+        selectedWord = null;
+      }
+      
       gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());  // clear canvas
       if (timeForNewWord == 0) { Utils.addWordToScreen(allWords, wordsOnScreen); }
 
@@ -185,21 +244,19 @@ public class Main extends Application {
       gc.setFont(SCOREFONT);
       gc.setFill(Color.WHEAT);
       gc.fillRect(20, 0, 115, 30);
-      gc.fillRect( WIDTH - 130, 0, 120, 30);//TODO adjust based on how high the score is
+      gc.fillRect( WIDTH - 130, 0, 120, 30);
       gc.setFill(Color.BLACK);
       gc.fillText(scoreAsStr, WIDTH - 125, 25);
       gc.fillText(healthAsStr,  25,  25);
 
-
       updateTime(); // determines when new words will be added
     }));
-
+    
     timeline.setCycleCount(Animation.INDEFINITE);
-
-    return scene;
+    
+    return timeline;
   }
   
-
   private void updateTime() {
     if (timeForNewWord <= 0)
       timeForNewWord = 10;
@@ -208,8 +265,6 @@ public class Main extends Application {
   }
   
   private void displayWord(GraphicsContext gc, Word word) {
-    // gc.drawImage(LION,word.getX(), word.getY() - lionHeight / 2); TODO make the lion image appear behind the word
-    
     if (word.equals(selectedWord)) {
       // calculate the offset between the typed and untyped parts of the word
       String typed = word.getContents().substring(0, word.getCurrentIndex());
@@ -233,13 +288,12 @@ public class Main extends Application {
   @Override
   public void start(final Stage stage) {
     this.stage = stage;
-    
     allWords = Utils.setUpWords(6);
-    
     
     menuScreen = createMenuScreen();
     rulesScreen = createRulesScreen();
     gameScreen = createGameScreen();
+    gameOverScreen = createGameOverScreen();
 
     stage.setTitle("Typing Game");
     stage.setScene(menuScreen);

@@ -27,7 +27,7 @@ public class Utils {
       scanner.close();
       return list;
     }
-    catch(FileNotFoundException fnfe) { return null; }//TODO handle exception here???
+    catch(FileNotFoundException fnfe) { return null; }
   }
 
   /**
@@ -59,13 +59,4 @@ public class Utils {
     wordsOnScreen.add(newWord);
   }
 }
-
-//
-////TODO:
-//set up rules page
-// implement health/high score
-// handle running out of words
-// problems with css directory structure
-// add extra images behind words
-// user selection mode for word length
   

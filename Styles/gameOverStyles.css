@@ -1,0 +1,15 @@
+.label{
+	-fx-text-fill: white;
+	-fx-font-size: 36 px;
+}
+
+
+.button{
+	-fx-color: red;
+	-fx-font-size:32px;
+	-fx-padding: 4px 28px;
+}
+
+.button:hover{
+	-fx-color: crimson;
+}
